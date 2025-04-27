@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 import cgi
 import os
 import MySQLdb
@@ -79,7 +81,7 @@ def add_server_to_db(user: str, desc: str, instance_id: int, ready: bool):
         db.close()
 
         # run background script
-        os.system(f"python3 /monitor_new_VM.py {instance_id} {new_server_id} 1>/dev/null 2>/dev/null &")
+        os.system(f"/monitor_new_VM {instance_id} {new_server_id} 1>/dev/null 2>/dev/null &")
 
         print("Status: 303 See Other")
         print(f"Location: {root_url}/api/servers/{new_server_id}")

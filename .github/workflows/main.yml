@@ -8,9 +8,10 @@ jobs:
   check-pr-title:
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR title length
+      - name: Validate PR Title
         run: |
+          echo "Checking PR title..."
           if [ "${{ github.event.pull_request.title }}" == "" ]; then
-            echo "Pull Request title cannot be empty!"
+            echo "::error ::Pull Request title cannot be empty!"
             exit 1
           fi

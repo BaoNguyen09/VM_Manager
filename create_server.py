@@ -1,9 +1,7 @@
 import cgi
 import os
 import MySQLdb
-import requests
 import config
-import json
 from pydo import Client
 
 root_url = ""
@@ -24,9 +22,9 @@ def print_status_500(body: str):
     print("Content-Type: text/plain\n")
     print(f"Database Connection Error: {body}")
 
-async def get_db_connection():
+def get_db_connection():
     try:
-        db = await MySQLdb.connect(
+        db = MySQLdb.connect(
             host=config.DB_HOST, 
             user=config.DB_USER, 
             passwd=config.DB_PASS, 
@@ -96,10 +94,12 @@ def main():
     path_component = extra_path.split("/")
     if request_method == "POST" or request_method == "GET": # read query parameter case of GET/POST method
         form = cgi.FieldStorage()
-        user = form.get("user", "")
-        desc = form.get("desc", None)
+        user = form.getvalue("user", "")
+        desc = form.getvalue("desc", None)
         droplet_id = create_server(user, desc)
-        add_server_to_db(user, desc, droplet_id, False)
+
+        if droplet_id:
+            add_server_to_db(user, desc, droplet_id, False)
     else:
         print_status_405(extra_path, request_method)
     

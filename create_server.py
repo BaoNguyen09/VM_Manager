@@ -33,7 +33,7 @@ def get_db_connection():
         return db
     
     except MySQLdb.Error as e:
-        print_status_500(e)
+        print_status_500(str(e))
 
 def create_server(user: str, desc: str) -> int:
     try:
@@ -79,6 +79,7 @@ def add_server_to_db(user: str, desc: str, instance_id: int, ready: bool):
         db.close()
 
         # run background script
+        os.system(f"python3 /monitor_new_VM.py {instance_id} {new_server_id} 1>/dev/null 2>/dev/null &")
 
         print("Status: 303 See Other")
         print(f"Location: {root_url}/api/servers/{new_server_id}")

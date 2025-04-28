@@ -1,9 +1,16 @@
 #! /usr/bin/python3
 
-import os
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import MySQLdb
 import config
 import json
+
+def print_json_200(data):
+    # respond with json data
+    print("Status: 200 OK")
+    print("Content-Type: application/json\n")
+    print(json.dumps(data))
 
 def print_status_400(body: str):
     print("Status: 400 Bad Request")
@@ -26,24 +33,26 @@ def get_db_connection():
         db = MySQLdb.connect(
             host=config.DB_HOST, 
             user=config.DB_USER, 
-            passwd=config.DB_PASS, 
-            db=config.DB_NAME
+            passwd=config.DB_PASSWORD, 
+            db=config.DB_NAME,
+            port=config.DB_PORT,
+            ssl={"ssl": {}}
         )
         return db
     
     except MySQLdb.Error as e:
         print_status_500(str(e))
+        exit(1)
 
 def main():
     # extract basic request info
     request_method = os.environ["REQUEST_METHOD"]
     extra_path = os.environ.get("PATH_INFO", "")
     path_component = extra_path.split("/")
-    resp = None
     if request_method == "GET":
         db = get_db_connection()
         cursor = db.cursor()
-        if extra_path == "/api/servers":
+        if extra_path == "" or extra_path == "/":
             # return all instances in database
             cursor.execute("SELECT * FROM servers;")
             rows = cursor.fetchall()
@@ -59,10 +68,11 @@ def main():
                     "ready": row[5]
                     }
                 )
+            print_json_200(resp)
 
-        if len(path_component) == 4 and path_component[3].isnumeric(): #  /api/servers/<id>
+        elif extra_path.startswith("/") and extra_path[1:].isnumeric(): #  /api/servers/<id>
             # return a single instance in db
-            primary_key = int(path_component[3])
+            primary_key = int(extra_path[1:])
             cursor.execute("SELECT * FROM servers WHERE id = %s;", (primary_key,))
             row = cursor.fetchone()
 
@@ -79,10 +89,12 @@ def main():
                     "ready": row[5]
                 }
             
-        # respond with json data
-        print("Status: 200 OK")
-        print("Content-Type: application/json\n")
-        print(json.dumps(resp))
+            print_json_200(resp)
 
+        else:
+            print_status_400("Page not found: " + extra_path)
     else:
         print_status_405(extra_path, "GET")
+        
+if __name__ == "__main__":
+    main()

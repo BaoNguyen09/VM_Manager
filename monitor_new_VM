@@ -11,14 +11,16 @@ def get_db_connection():
         db = MySQLdb.connect(
             host=config.DB_HOST, 
             user=config.DB_USER, 
-            passwd=config.DB_PASS, 
-            db=config.DB_NAME
+            passwd=config.DB_PASSWORD, 
+            db=config.DB_NAME,
+            port=config.DB_PORT,
+            ssl={"ssl": {}}
         )
         return db
     
     except MySQLdb.Error as e:
         print(str(e))
-        raise
+        exit(1)
 
 def main():
     try:
@@ -40,9 +42,8 @@ def main():
             # Connect to Digital Ocean API to track new VM creation
             resp = client.droplets.get(droplet_id=int(instance_id))
             limit -= 1
-            if "droplet" not in resp: # error status
-                # report error, sleep for 5 seconds and retry
-                print(resp["message"])
+            if not resp or "droplet" not in resp:
+                print("Error fetching droplet info:", resp)
                 time.sleep(5)
                 continue
 
@@ -64,6 +65,9 @@ def main():
         db = get_db_connection()
         cursor = db.cursor()
         # Insert into servers table
+        if public_ip is None:
+            print("Failed to retrieve public IP address.")
+            exit(1)
         cursor.execute("UPDATE servers \
                        SET ready = %s, public_ip = %s \
                        WHERE id = %s;", 
@@ -74,7 +78,9 @@ def main():
 
     except ValueError as e:
         print(str(e))
+        exit(1)
     except Exception as e:
         print(str(e))
+        exit(1)
 
 main()

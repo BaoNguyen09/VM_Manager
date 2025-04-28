@@ -6,8 +6,6 @@ import MySQLdb
 import config
 from pydo import Client
 
-root_url = ""
-
 def print_status_400(body: str):
     print("Status: 400 Bad Request")
     print("Content-Type: text/plain\n")
@@ -29,13 +27,16 @@ def get_db_connection():
         db = MySQLdb.connect(
             host=config.DB_HOST, 
             user=config.DB_USER, 
-            passwd=config.DB_PASS, 
-            db=config.DB_NAME
+            passwd=config.DB_PASSWORD, 
+            db=config.DB_NAME,
+            port=config.DB_PORT,
+            ssl={"ssl": {}}
         )
         return db
     
     except MySQLdb.Error as e:
         print_status_500(str(e))
+        exit(1)
 
 def create_server(user: str, desc: str) -> int:
     try:
@@ -81,10 +82,10 @@ def add_server_to_db(user: str, desc: str, instance_id: int, ready: bool):
         db.close()
 
         # run background script
-        os.system(f"/monitor_new_VM {instance_id} {new_server_id} 1>/dev/null 2>/dev/null &")
+        os.system(f"./monitor_new_VM {instance_id} {new_server_id} 1>/dev/null 2>/dev/null &")
 
         print("Status: 303 See Other")
-        print(f"Location: {root_url}/api/servers/{new_server_id}")
+        print(f"Location: {config.ROOT_URL}/api/servers/{new_server_id}")
         print()
 
     except Exception as e:

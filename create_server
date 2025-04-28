@@ -6,6 +6,18 @@ import MySQLdb
 import config
 from pydo import Client
 
+config_commands = """#cloud-config
+    runcmd:
+        - apt update
+        - apt install apache2 -y
+        - systemctl enable apache2
+        - mkdir -p /etc/systemd/system/apache2.service.d/
+        - bash -c 'echo -e "[Unit]\nAfter=network-online.target\nWants=network-online.target" > /etc/systemd/system/apache2.service.d/override.conf'
+        - systemctl daemon-reload
+        - systemctl restart apache2
+        - echo "hello, world" > /root/dummy.txt
+"""
+
 def print_status_400(body: str):
     print("Status: 400 Bad Request")
     print("Content-Type: text/plain\n")
@@ -57,6 +69,7 @@ def create_server(user: str, desc: str) -> int:
             "backups": False,
             "ipv6": True,
             "monitoring": True,
+            "user_data": config_commands
         }
 
         resp = client.droplets.create(body=req)

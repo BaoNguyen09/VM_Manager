@@ -5,6 +5,7 @@
 ---
 
 ## 🚀 Overview
+Watch a quick demo here 👉: [my awsome video](https://drive.google.com/file/d/14f23vq2p8Ut23J4sIIHrXQstL3WkBZH-/view?usp=sharing)
 
 CloudProvisioner is a simple server-side tool that allows users (or automated systems) to:
 - Launch new cloud VM instances on demand
@@ -33,7 +34,7 @@ This project was completed for **CSC 346: Cloud Computing** at the University of
   - Updates database when VM instance becomes "ready"
 
 - **Cloud Provider**  
-  - Actual compute infrastructure for VMs (e.g., DigitalOcean, AWS, GCP)
+  - Actual compute infrastructure for VMs: DigitalOcean
 
 ---
 
@@ -82,27 +83,19 @@ Returns JSON object for a specific server.
 
 - **Python 3** for CGI scripts
 - **Apache2** HTTP server
-- **MySQL** cloud database (e.g., PlanetScale)
-- **Cloud API SDKs** (depending on provider)
+- **MySQL** cloud database (I use Railway)
+- **Cloud API SDKs** (I use Digital Ocean)
 - **Bash** scripting (for background monitoring)
 - **Linux/Ubuntu** (typical VM OS)
 
 ---
 
-## 📸 Demo Video
-
-A walkthrough video demonstrating instance creation, monitoring, and API usage has been provided.  
-👉 **[Demo Video Link Here]**  
-(Upload to YouTube as unlisted and paste link)
-
----
-
 ## 📋 Setup Instructions (for grading)
 
-1. Clone project files into your CGI directory (`/var/www/html/cgi-bin/`)
+1. Clone project files into your CGI directory (`/usr/lib/cgi-bin/` if you use Ubuntu 22.04 (LTS) x64 version)
 2. Set up environment variables or a config file for database credentials (never hardcode credentials into scripts).
 3. Ensure Python3, MySQLdb, and necessary cloud CLI tools (e.g., `doctl`, `aws`, `gcloud`) are installed.
-4. Deploy cloud SQL database according to provided schema (`Servers.txt`).
+4. Deploy cloud SQL database according to provided schema (`servers.txt`).
 5. Adjust CGI file permissions as needed (`chmod 755`).
 
 ---

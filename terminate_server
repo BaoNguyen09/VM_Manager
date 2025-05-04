@@ -1,4 +1,4 @@
-#! /usr/lib/python3
+#! /usr/bin/python3
 
 import cgi
 import os
@@ -48,9 +48,10 @@ def terminate_server(primary_key: str):
         db = get_db_connection()
         cursor = db.cursor()
         # delete that server instance in the database
-        cursor.execute("SELECT FROM servers WHERE id = %s;", 
+        cursor.execute("SELECT instance_id FROM servers WHERE id = %s;", 
                        (primary_key, ))
-        instance_id = cursor.fetchone()
+        result = cursor.fetchone()
+        instance_id = result[0] if result else None
 
         if instance_id is None:
             raise ValueError("This id doesn't exist in the database")
@@ -98,8 +99,8 @@ def main():
         primary_key = form.getvalue("id", "")
         terminate_server(primary_key)
         
-        if primary_key.isnumeric():
-            remove_server_from_db()
+        if primary_key and primary_key.isnumeric():
+            remove_server_from_db(primary_key)
     else:
         print_status_405(extra_path, request_method)
     

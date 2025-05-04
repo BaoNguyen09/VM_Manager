@@ -5,6 +5,7 @@ import os
 import MySQLdb
 import config
 from pydo import Client
+from http.cookies import SimpleCookie
 
 config_commands = """#cloud-config
     runcmd:
@@ -98,7 +99,7 @@ def add_server_to_db(user: str, desc: str, instance_id: int, ready: bool):
         os.system(f"./monitor_new_VM {instance_id} {new_server_id} 1>/dev/null 2>/dev/null &")
 
         print("Status: 303 See Other")
-        print(f"Location: {config.ROOT_URL}/api/servers/{new_server_id}")
+        print(f"Location: {config.ROOT_URL}/cgi-bin/api/servers/{new_server_id}")
         print()
 
     except Exception as e:
@@ -111,7 +112,16 @@ def main():
     path_component = extra_path.split("/")
     if request_method == "POST" or request_method == "GET": # read query parameter case of GET/POST method
         form = cgi.FieldStorage()
-        user = form.getvalue("user", "")
+        # Get user field from cookie
+        cookie_string = os.environ.get("HTTP_COOKIE", "")
+        parsed = SimpleCookie(cookie_string)
+        user = parsed.get("user").value if "user" in parsed else None
+        if not user: # Redirect to login
+            print("Status: 303 See Other")
+            print(f"Location: {config.ROOT_URL}/login.html")
+            print()
+            return
+        # Get desc field from query param
         desc = form.getvalue("desc", None)
         droplet_id = create_server(user, desc)
 

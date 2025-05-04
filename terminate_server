@@ -1,0 +1,130 @@
+#! /usr/bin/python3
+
+import cgi
+import os
+import MySQLdb
+import config
+from pydo import Client
+from http.cookies import SimpleCookie
+
+def print_status_400(body: str):
+    print("Status: 400 Bad Request")
+    print("Content-Type: text/plain\n")
+    print(f"Invalid Request: {body}")
+
+def print_status_403(body: str):
+    print("Status: 403 Forbidden")
+    print("Content-Type: text/plain\n")
+    print(f"Forbidden: {body}")
+
+def print_status_405(extra_path: str, allowed_method: str):
+    print("Status 405: Method Not Allowed")
+    print("Content-Type: text/plain\n")
+    print(f"Method '{allowed_method}' isn't allowed for path: '{extra_path}'\n \
+            Allowed method: POST")
+
+def print_status_500(body: str):
+    print("Status: 500 Internal Server Error")
+    print("Content-Type: text/plain\n")
+    print(f"Database Connection Error: {body}")
+
+def get_db_connection():
+    try:
+        db = MySQLdb.connect(
+            host=config.DB_HOST, 
+            user=config.DB_USER, 
+            passwd=config.DB_PASSWORD, 
+            db=config.DB_NAME,
+            port=config.DB_PORT,
+            ssl={"ssl": {}}
+        )
+        return db
+    
+    except MySQLdb.Error as e:
+        print_status_500(str(e))
+        exit(1)
+
+def terminate_server(primary_key: str, user: str):
+    try:
+        if (not primary_key.isnumeric()):
+            raise ValueError("Fields 'id' must be a valid numeric string")
+        
+        client = Client(token=config.DO_API_TOKEN)
+
+        db = get_db_connection()
+        cursor = db.cursor()
+        # delete that server instance in the database
+        cursor.execute("SELECT instance_id, owner FROM servers WHERE id = %s;", 
+                       (primary_key, ))
+        result = cursor.fetchone()
+        instance_id = result[0] if result else None
+        owner = result[1] if result else None
+
+        if instance_id is None or not owner:
+            raise ValueError("This id doesn't exist in the database")
+        
+        if owner != user: # Validate ownership before terminating
+            print_status_403("This user doesn't have access to this server")
+            return
+
+        db.commit()
+        cursor.close()
+        db.close()
+
+        resp = client.droplets.destroy(droplet_id=int(instance_id))
+        if resp: # if the operation fails, it will return a response body
+            print_status_500(resp["message"])
+            return
+        # Remove this server from db
+        if primary_key and primary_key.isnumeric():
+            remove_server_from_db(primary_key)
+        return
+
+    except ValueError as e:
+        print_status_400(str(e))
+
+def remove_server_from_db(primary_key: str):
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        # delete that server instance in the database
+        cursor.execute("DELETE FROM servers WHERE id = %s;", 
+                       (primary_key, ))
+
+        db.commit()
+        cursor.close()
+        db.close()
+
+        print("Status: 303 See Other")
+        print(f"Location: {config.ROOT_URL}/cgi-bin/api/servers")
+        print()
+
+    except Exception as e:
+        print_status_500(str(e))
+
+def main():
+    # extract basic request info
+    request_method = os.environ["REQUEST_METHOD"]
+    extra_path = os.environ.get("PATH_INFO", "").lstrip("/")
+
+    # Check user field in cookie
+    cookie_string = os.environ.get("HTTP_COOKIE", "")
+    parsed = SimpleCookie(cookie_string)
+    user = parsed.get("user").value if "user" in parsed else None
+    if not user: # Redirect to login
+        print("Status: 303 See Other")
+        print(f"Location: {config.ROOT_URL}/login.html")
+        print()
+        return
+
+    if request_method == "POST" or request_method == "GET": # read query parameter case of GET/POST method
+        form = cgi.FieldStorage()
+        primary_key = form.getvalue("id", "")
+        terminate_server(primary_key, user)
+    else:
+        print_status_405(extra_path, request_method)
+    
+if __name__ == "__main__":
+    main()
+
+

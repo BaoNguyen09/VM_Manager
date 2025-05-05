@@ -96,7 +96,7 @@ def remove_server_from_db(primary_key: str):
         db.close()
 
         print("Status: 303 See Other")
-        print(f"Location: {config.ROOT_URL}/cgi-bin/api/servers")
+        print(f"Location: {config.ROOT_URL}/cgi-bin/home")
         print()
 
     except Exception as e:

@@ -54,7 +54,7 @@ def generate_html(user: str, servers: list[dict]):
                 <td>{sid}</td>
                 <td>{desc}</td>
                 <td>{status}</td>
-                <td>{ip_display}</td>
+                <td><a href="http://{ip_display}" target="_blank">{ip_display}</a></td>
                 <td>
                     <form method="POST" action="/cgi-bin/terminate_server" style="display:inline;">
                         <input type="hidden" name="id" value="{sid}">

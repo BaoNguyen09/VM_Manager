@@ -6,7 +6,7 @@ def get_all_servers(user: str) -> list[dict]:
     # return all instances in database
     cursor.execute("SELECT * FROM servers WHERE owner = %s;", (user,))
     rows = cursor.fetchall()
-    db.commit()
+
     cursor.close()
     db.close()
 
@@ -30,11 +30,11 @@ def get_server(primary_key: int, user: str) -> dict:
     # return a single instance in db
     cursor.execute("SELECT * FROM servers WHERE id = %s AND owner = %s;", (primary_key, user,))
     row = cursor.fetchone()
-    db.commit()
+
     cursor.close()
     db.close()
 
-    if row == None:
+    if row is None:
         return {}
     
     resp = {

@@ -2,99 +2,43 @@
 
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import MySQLdb
-import config
-import json
-
-def print_json_200(data):
-    # respond with json data
-    print("Status: 200 OK")
-    print("Content-Type: application/json\n")
-    print(json.dumps(data))
-
-def print_status_400(body: str):
-    print("Status: 400 Bad Request")
-    print("Content-Type: text/plain\n")
-    print(f"Invalid Request: {body}")
-
-def print_status_405(extra_path: str, allowed_method: str):
-    print("Status 405: Method Not Allowed")
-    print("Content-Type: text/plain\n")
-    print(f"Method '{allowed_method}' isn't allowed for path: '{extra_path}'\n \
-            Allowed method: POST")
-
-def print_status_500(body: str):
-    print("Status: 500 Internal Server Error")
-    print("Content-Type: text/plain\n")
-    print(f"Database Connection Error: {body}")
-
-def get_db_connection():
-    try:
-        db = MySQLdb.connect(
-            host=config.DB_HOST, 
-            user=config.DB_USER, 
-            passwd=config.DB_PASSWORD, 
-            db=config.DB_NAME,
-            port=config.DB_PORT,
-            ssl={"ssl": {}}
-        )
-        return db
-    
-    except MySQLdb.Error as e:
-        print_status_500(str(e))
-        exit(1)
+from http.cookies import SimpleCookie
+from get_servers import get_all_servers, get_server
+from utils import *
 
 def main():
     # extract basic request info
     request_method = os.environ["REQUEST_METHOD"]
     extra_path = os.environ.get("PATH_INFO", "")
-    path_component = extra_path.split("/")
+
+    # Get user field from cookie
+    cookie_string = os.environ.get("HTTP_COOKIE", "")
+    parsed = SimpleCookie(cookie_string)
+    user = parsed.get("user").value if "user" in parsed else None
+
+    if not user: # Redirect to login
+        print_redirect_300(f"login.html")
+        return
+    
     if request_method == "GET":
-        db = get_db_connection()
-        cursor = db.cursor()
         if extra_path == "" or extra_path == "/":
             # return all instances in database
-            cursor.execute("SELECT * FROM servers;")
-            rows = cursor.fetchall()
-            resp = []
-            for row in rows:
-                resp.append(
-                    {
-                    "id": row[0],
-                    "owner": row[1],
-                    "description": row[2],
-                    "instance_id": row[3],
-                    "public_ip": row[4],
-                    "ready": row[5]
-                    }
-                )
+            resp = get_all_servers(user)
             print_json_200(resp)
 
         elif extra_path.startswith("/") and extra_path[1:].isnumeric(): #  /api/servers/<id>
             # return a single instance in db
             primary_key = int(extra_path[1:])
-            cursor.execute("SELECT * FROM servers WHERE id = %s;", (primary_key,))
-            row = cursor.fetchone()
-
-            if row == None:
+            resp = get_server(primary_key, user)
+            if resp == {}:
                 print_status_400("can't find server with this id in the database")
-                return
-            
-            resp = {
-                    "id": row[0],
-                    "owner": row[1],
-                    "description": row[2],
-                    "instance_id": row[3],
-                    "public_ip": row[4],
-                    "ready": row[5]
-                }
-            
             print_json_200(resp)
-
+            
         else:
             print_status_400("Page not found: " + extra_path)
+
     else:
         print_status_405(extra_path, "GET")
-        
+
 if __name__ == "__main__":
     main()

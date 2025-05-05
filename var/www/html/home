@@ -1,0 +1,89 @@
+#! /usr/bin/python3
+
+from get_servers import get_all_servers
+from utils import print_redirect_300, get_cookie
+
+def generate_html(user: str, servers: list[dict]):
+    print("Content-Type: text/html\n")
+    print(f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>{user} Cloud Servers</title>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: sans-serif; margin: 2rem; }}
+                h1 {{ color: #333; }}
+                table, th, td {{ border: 1px solid #ccc; border-collapse: collapse; padding: 0.5rem; }}
+                th {{ background-color: #f0f0f0; }}
+                form {{ margin-top: 1rem; }}
+            </style>
+        </head>
+        <body>
+            <h1>Welcome, {user}</h1>
+            <h2>Create New Server</h2>
+            <form method="POST" action="/cgi-bin/create_server">
+                <label for="desc">Description:</label>
+                <input type="text" name="desc" id="desc required />
+                <button type="submit">Create</button>
+            </form>
+            <h2>Your Servers</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>IP</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+    """)
+
+    for server in servers:
+        sid = server["id"]
+        desc = server["description"]
+        ip = server["ip"]
+        ready = server["ready"]
+
+        status = "Ready" if ready else "Pending"
+        ip_display = ip if ip else "N/A"
+        print(f"""
+            <tr>
+                <td>{sid}</td>
+                <td>{desc}</td>
+                <td>{status}</td>
+                <td>{ip_display}</td>
+                <td>
+                    <form method="POST" action="/cgi-bin/terminate_server" style="display:inline;">
+                        <input type="hidden" name="id" value="{sid}">
+                        <button type="submit">Terminate</button>
+                    </form>
+                </td>
+            </tr>
+        """)
+
+    print("""
+                </tbody>
+            </table>
+        </body>
+    </html>
+    """)
+
+
+def main():
+    # Get user field from cookie
+    user = get_cookie()
+    if not user: # Redirect to login
+        print_redirect_300("login.html")
+        return
+    
+    # Fetch user's servers
+    servers = get_all_servers(user)
+
+    # Generate HTML
+    generate_html(user, servers)
+
+if __name__ == "__main__":
+    main()

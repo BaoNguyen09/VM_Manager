@@ -12,11 +12,7 @@ config_commands = """#cloud-config
         - apt update
         - apt install apache2 -y
         - systemctl enable apache2
-        - mkdir -p /etc/systemd/system/apache2.service.d/
-        - bash -c 'echo -e "[Unit]\nAfter=network-online.target\nWants=network-online.target" > /etc/systemd/system/apache2.service.d/override.conf'
-        - systemctl daemon-reload
-        - systemctl restart apache2
-        - echo "hello, world" > /root/dummy.txt
+        - systemctl start apache2
 """
 
 def print_status_400(body: str):

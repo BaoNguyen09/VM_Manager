@@ -18,6 +18,16 @@ def main():
             return
         
         print(f"Set-Cookie: user={user}; Path=/; HttpOnly; SameSite=Lax")
+        
+        # Update sessions table with this user
+        db = get_db_connection()
+        cursor = db.cursor()
+        
+        cursor.execute("REPLACE INTO sessions (username) VALUES (%s);", 
+                       (user,))
+        db.commit()
+        cursor.close()
+        db.close()
 
         print_redirect_300("cgi-bin/home")
     else:

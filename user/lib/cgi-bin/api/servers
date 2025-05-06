@@ -1,0 +1,44 @@
+#! /usr/bin/python3
+
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from http.cookies import SimpleCookie
+from get_servers import get_all_servers, get_server
+from utils import *
+
+def main():
+    # extract basic request info
+    request_method = os.environ["REQUEST_METHOD"]
+    extra_path = os.environ.get("PATH_INFO", "")
+
+    # Get user field from cookie
+    cookie_string = os.environ.get("HTTP_COOKIE", "")
+    parsed = SimpleCookie(cookie_string)
+    user = parsed.get("user").value if "user" in parsed else None
+
+    if not user: # Redirect to login
+        print_redirect_300(f"login.html")
+        return
+    
+    if request_method == "GET":
+        if extra_path == "" or extra_path == "/":
+            # return all instances in database
+            resp = get_all_servers(user)
+            print_json_200(resp)
+
+        elif extra_path.startswith("/") and extra_path[1:].isnumeric(): #  /api/servers/<id>
+            # return a single instance in db
+            primary_key = int(extra_path[1:])
+            resp = get_server(primary_key, user)
+            if resp == {}:
+                print_status_400("can't find server with this id in the database")
+            print_json_200(resp)
+            
+        else:
+            print_status_400("Page not found: " + extra_path)
+
+    else:
+        print_status_405(extra_path, "GET")
+
+if __name__ == "__main__":
+    main()

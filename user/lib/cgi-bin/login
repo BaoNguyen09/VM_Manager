@@ -1,0 +1,27 @@
+#! /usr/bin/python3
+
+import os
+import cgi
+import config
+from utils import *
+
+def main():
+    # extract basic request info
+    request_method = os.environ["REQUEST_METHOD"]
+    extra_path = os.environ.get("PATH_INFO", "").lstrip("/")
+    if request_method == "POST": # read request body
+        form = cgi.FieldStorage()
+        user = form.getvalue("user", "")
+        
+        if not user:
+            print_status_400("Field 'user' is empty")
+            return
+        
+        print(f"Set-Cookie: user={user}; Path=/; HttpOnly; SameSite=Lax")
+
+        print_redirect_300("cgi-bin/home")
+    else:
+        print_status_405(extra_path, request_method)
+    
+if __name__ == "__main__":
+    main()

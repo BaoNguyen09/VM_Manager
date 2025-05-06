@@ -5,22 +5,7 @@ from pydo import Client
 import time
 import MySQLdb
 import config
-
-def get_db_connection():
-    try:
-        db = MySQLdb.connect(
-            host=config.DB_HOST, 
-            user=config.DB_USER, 
-            passwd=config.DB_PASSWORD, 
-            db=config.DB_NAME,
-            port=config.DB_PORT,
-            ssl={"ssl": {}}
-        )
-        return db
-    
-    except MySQLdb.Error as e:
-        print(str(e))
-        exit(1)
+from utils import *
 
 def main():
     try:

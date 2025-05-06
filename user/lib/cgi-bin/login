@@ -3,22 +3,7 @@
 import os
 import cgi
 import config
-
-def print_status_400(body: str):
-    print("Status: 400 Bad Request")
-    print("Content-Type: text/plain\n")
-    print(f"Invalid Request: {body}")
-
-def print_status_405(extra_path: str, allowed_method: str):
-    print("Status 405: Method Not Allowed")
-    print("Content-Type: text/plain\n")
-    print(f"Method '{allowed_method}' isn't allowed for path: '{extra_path}'\n \
-            Allowed method: POST")
-
-def print_status_500(body: str):
-    print("Status: 500 Internal Server Error")
-    print("Content-Type: text/plain\n")
-    print(f"Database Connection Error: {body}")
+from utils import *
 
 def main():
     # extract basic request info
@@ -34,9 +19,7 @@ def main():
         
         print(f"Set-Cookie: user={user}; Path=/; HttpOnly; SameSite=Lax")
 
-        print("Status: 303 See Other")
-        print(f"Location: {config.ROOT_URL}/index.html")
-        print()
+        print_redirect_300("cgi-bin/home")
     else:
         print_status_405(extra_path, request_method)
     

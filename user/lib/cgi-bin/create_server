@@ -6,6 +6,7 @@ import MySQLdb
 import config
 from pydo import Client
 from http.cookies import SimpleCookie
+from utils import *
 
 config_commands = """#cloud-config
     runcmd:
@@ -14,38 +15,6 @@ config_commands = """#cloud-config
         - systemctl enable apache2
         - systemctl start apache2
 """
-
-def print_status_400(body: str):
-    print("Status: 400 Bad Request")
-    print("Content-Type: text/plain\n")
-    print(f"Invalid Request: {body}")
-
-def print_status_405(extra_path: str, allowed_method: str):
-    print("Status 405: Method Not Allowed")
-    print("Content-Type: text/plain\n")
-    print(f"Method '{allowed_method}' isn't allowed for path: '{extra_path}'\n \
-            Allowed method: POST")
-
-def print_status_500(body: str):
-    print("Status: 500 Internal Server Error")
-    print("Content-Type: text/plain\n")
-    print(f"Database Connection Error: {body}")
-
-def get_db_connection():
-    try:
-        db = MySQLdb.connect(
-            host=config.DB_HOST, 
-            user=config.DB_USER, 
-            passwd=config.DB_PASSWORD, 
-            db=config.DB_NAME,
-            port=config.DB_PORT,
-            ssl={"ssl": {}}
-        )
-        return db
-    
-    except MySQLdb.Error as e:
-        print_status_500(str(e))
-        exit(1)
 
 def create_server(user: str, desc: str) -> int:
     try:
@@ -94,9 +63,7 @@ def add_server_to_db(user: str, desc: str, instance_id: int, ready: bool):
         # run background script
         os.system(f"./monitor_new_VM {instance_id} {new_server_id} 1>/dev/null 2>/dev/null &")
 
-        print("Status: 303 See Other")
-        print(f"Location: {config.ROOT_URL}/cgi-bin/home")
-        print()
+        print_redirect_300("cgi-bin/home")
 
     except Exception as e:
         print_status_500(str(e))
@@ -105,17 +72,12 @@ def main():
     # extract basic request info
     request_method = os.environ["REQUEST_METHOD"]
     extra_path = os.environ.get("PATH_INFO", "").lstrip("/")
-    path_component = extra_path.split("/")
     if request_method == "POST" or request_method == "GET": # read query parameter case of GET/POST method
         form = cgi.FieldStorage()
         # Get user field from cookie
-        cookie_string = os.environ.get("HTTP_COOKIE", "")
-        parsed = SimpleCookie(cookie_string)
-        user = parsed.get("user").value if "user" in parsed else None
+        user = get_cookie()
         if not user: # Redirect to login
-            print("Status: 303 See Other")
-            print(f"Location: {config.ROOT_URL}/login.html")
-            print()
+            print_redirect_300("login.html")
             return
         # Get desc field from query param
         desc = form.getvalue("desc", None)

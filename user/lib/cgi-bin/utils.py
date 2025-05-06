@@ -20,6 +20,11 @@ def print_status_400(body: str):
     print("Content-Type: text/plain\n")
     print(f"Invalid Request: {body}")
 
+def print_status_403(body: str):
+    print("Status: 403 Forbidden")
+    print("Content-Type: text/plain\n")
+    print(f"Forbidden: {body}")
+
 def print_status_405(extra_path: str, allowed_method: str):
     print("Status 405: Method Not Allowed")
     print("Content-Type: text/plain\n")

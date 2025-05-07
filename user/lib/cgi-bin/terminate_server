@@ -69,7 +69,7 @@ def main():
     extra_path = os.environ.get("PATH_INFO", "").lstrip("/")
 
     # Check user field in cookie
-    user = get_cookie()
+    user = get_authenticated_user()
     if not user: # Redirect to login
         print_redirect_300("login.html")
         return

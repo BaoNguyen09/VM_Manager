@@ -2,7 +2,6 @@
 
 import os
 import cgi
-import config
 from utils import *
 
 def main():

@@ -3,7 +3,6 @@
 import sys
 from pydo import Client
 import time
-import MySQLdb
 import config
 from utils import *
 

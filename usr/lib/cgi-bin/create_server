@@ -2,10 +2,8 @@
 
 import cgi
 import os
-import MySQLdb
 import config
 from pydo import Client
-from http.cookies import SimpleCookie
 from utils import *
 
 config_commands = """#cloud-config

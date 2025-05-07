@@ -52,8 +52,26 @@ def get_db_connection():
         print_status_500(str(e))
         exit(1)
 
-def get_cookie() -> str | None:
+def get_authenticated_user() -> str | None:
     # Get user field from cookie
     cookie_string = os.environ.get("HTTP_COOKIE", "")
     parsed = SimpleCookie(cookie_string)
-    return parsed.get("user").value if "user" in parsed else None
+    user = parsed.get("user").value if "user" in parsed else None
+    if user is None:
+        return None
+    
+    # Query the sessions table to authenticate
+    db = get_db_connection()
+    cursor = db.cursor()
+
+    cursor.execute("SELECT * FROM sessions WHERE username = %s;", 
+                    (user,))
+    username = cursor.fetchone() # id of new row created in MySQL table
+    
+    db.commit()
+    cursor.close()
+    db.close()
+
+    if not username:
+        return None
+    return user

@@ -75,7 +75,7 @@ def main():
     if request_method == "POST" or request_method == "GET": # read query parameter case of GET/POST method
         form = cgi.FieldStorage()
         # Get user field from cookie
-        user = get_cookie()
+        user = get_authenticated_user()
         if not user: # Redirect to login
             print_redirect_300("login.html")
             return

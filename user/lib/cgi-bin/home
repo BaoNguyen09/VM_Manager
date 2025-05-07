@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 
 from get_servers import get_all_servers
-from utils import print_redirect_300, get_cookie
+from utils import print_redirect_300, get_authenticated_user
 
 def generate_html(user: str, servers: list[dict]):
     print("Content-Type: text/html\n")
@@ -74,7 +74,7 @@ def generate_html(user: str, servers: list[dict]):
 
 def main():
     # Get user field from cookie
-    user = get_cookie()
+    user = get_authenticated_user()
     if not user: # Redirect to login
         print_redirect_300("login.html")
         return
